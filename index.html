@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f7f6fb">
+  <title>Dashboard — Lingua</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #25243a;
+      --muted: #9998aa;
+      --line: #eeedf3;
+      --surface: #fff;
+      --canvas: #f8f7fb;
+      --purple: #8171dc;
+      --purple-soft: #efedff;
+      --green: #7fbe9e;
+      --orange: #f0a477;
+      --shadow: 0 12px 34px rgba(44, 39, 83, .045);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 96% 0%, rgba(231, 226, 255, .54), transparent 28rem),
+        var(--canvas);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .app { min-height: 100vh; }
+
+    .sidebar {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 5;
+      display: flex;
+      width: 88px;
+      flex-direction: column;
+      align-items: center;
+      padding: 26px 0 22px;
+      border-right: 1px solid rgba(231, 229, 239, .78);
+      background: rgba(255, 255, 255, .82);
+      backdrop-filter: blur(18px);
+    }
+
+    .brand {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--ink);
+      color: white;
+      box-shadow: 0 6px 15px rgba(37, 36, 58, .18);
+    }
+
+    .nav-list {
+      display: flex;
+      width: 100%;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin: 49px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .nav-button {
+      position: relative;
+      display: grid;
+      width: 44px;
+      height: 44px;
+      place-items: center;
+      border: 0;
+      border-radius: 15px;
+      background: transparent;
+      color: #aaa9b8;
+      cursor: pointer;
+      transition: color .2s, background .2s, transform .2s;
+    }
+    .nav-button:hover { color: var(--purple); background: #f5f3ff; transform: translateY(-1px); }
+    .nav-button.active { background: var(--purple-soft); color: var(--purple); }
+    .nav-button.active::before {
+      position: absolute;
+      left: -22px;
+      width: 3px;
+      height: 21px;
+      border-radius: 0 4px 4px 0;
+      background: var(--purple);
+      content: "";
+    }
+    .nav-button svg { width: 19px; height: 19px; }
+    .nav-bottom { display: grid; gap: 12px; }
+    .nav-avatar { width: 36px; height: 36px; border: 3px solid white; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px #29253a1b; }
+
+    .main { max-width: 1600px; margin-left: 88px; padding: 0 4.4vw 48px; }
+    .topbar {
+      display: flex;
+      height: 86px;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(231, 229, 239, .72);
+    }
+    .breadcrumb { display: flex; align-items: center; gap: 10px; color: #a4a2b2; font-size: 12px; }
+    .breadcrumb strong { color: #46445c; font-weight: 600; }
+    .top-actions { display: flex; align-items: center; gap: 19px; }
+    .search {
+      display: flex;
+      width: 220px;
+      height: 38px;
+      align-items: center;
+      gap: 9px;
+      padding: 0 12px;
+      border: 1px solid #edebf2;
+      border-radius: 12px;
+      background: rgba(255,255,255,.74);
+      color: #aaa8b8;
+    }
+    .search svg { width: 16px; height: 16px; flex: 0 0 auto; }
+    .search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ink); font-size: 11px; }
+    .search input::placeholder { color: #aaa8b8; }
+    .icon-action {
+      position: relative;
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid #edebf2;
+      border-radius: 12px;
+      background: rgba(255,255,255,.8);
+      color: #858397;
+      cursor: pointer;
+    }
+    .icon-action svg { width: 17px; height: 17px; }
+    .notification-dot { position: absolute; top: 8px; right: 8px; width: 6px; height: 6px; border: 1px solid white; border-radius: 50%; background: #ed947a; }
+    .profile { display: flex; align-items: center; gap: 10px; }
+    .profile img { width: 37px; height: 37px; border-radius: 13px; object-fit: cover; }
+    .profile-copy { display: grid; gap: 3px; }
+    .profile-copy strong { font-size: 11px; font-weight: 650; }
+    .profile-copy span { color: var(--muted); font-size: 10px; }
+    .chevron { color: #aaa8b8; font-size: 13px; }
+
+    .page-heading { display: flex; align-items: flex-end; justify-content: space-between; margin: 35px 0 23px; }
+    .eyebrow { margin: 0 0 8px; color: #a3a0b1; font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(25px, 2.2vw, 31px); font-weight: 650; letter-spacing: -.055em; }
+    .welcome { margin: 8px 0 0; color: #9694a6; font-size: 12px; }
+    .date-button {
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 13px; border: 1px solid #eeedf3; border-radius: 11px;
+      background: rgba(255,255,255,.76); color: #68667c; font-size: 11px;
+    }
+    .date-button svg { width: 15px; height: 15px; color: #9693a9; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(285px, .87fr) minmax(0, 1.7fr);
+      gap: 20px;
+    }
+    .card { border: 1px solid rgba(237, 235, 243, .92); border-radius: 17px; background: rgba(255,255,255,.9); box-shadow: var(--shadow); }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; }
+    .section-heading h2 { margin: 0; font-size: 13px; font-weight: 650; letter-spacing: -.02em; }
+    .section-heading p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+    .text-link { padding: 5px 0; border: 0; background: none; color: var(--purple); font-size: 10px; font-weight: 600; cursor: pointer; }
+
+    .courses-card { padding: 20px 18px 17px; }
+    .courses-list { display: grid; gap: 11px; margin-top: 18px; }
+    .course {
+      position: relative;
+      display: flex;
+      min-height: 89px;
+      align-items: center;
+      gap: 12px;
+      overflow: hidden;
+      padding: 13px 13px;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      text-align: left;
+      cursor: pointer;
+      transition: transform .18s, box-shadow .18s, border-color .18s;
+    }
+    .course:hover { transform: translateY(-2px); box-shadow: 0 8px 17px rgba(50,45,82,.08); }
+    .course.selected { border-color: rgba(124, 108, 216, .36); }
+    .course-purple { background: linear-gradient(112deg, #f1efff, #f8f6ff 76%); }
+    .course-peach { background: linear-gradient(112deg, #fff0e8, #fff8f3 76%); }
+    .course-green { background: linear-gradient(112deg, #e9f7ef, #f5fbf7 76%); }
+    .course-icon { display: grid; width: 37px; height: 37px; flex: 0 0 auto; place-items: center; border-radius: 12px; background: rgba(255,255,255,.76); color: #8879d8; }
+    .course-peach .course-icon { color: #e1966f; }
+    .course-green .course-icon { color: #70ad8e; }
+    .course-icon svg { width: 18px; height: 18px; }
+    .course-copy { min-width: 0; flex: 1; }
+    .course-copy strong { display: block; overflow: hidden; color: #37354b; font-size: 11px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+    .course-copy span { display: block; margin-top: 5px; color: #9391a3; font-size: 9px; }
+    .course-progress { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+    .progress-track { width: 68px; height: 4px; overflow: hidden; border-radius: 5px; background: rgba(85,79,121,.11); }
+    .progress-track span { display: block; height: 100%; border-radius: inherit; background: #8e80df; }
+    .course-peach .progress-track span { background: #eba177; }
+    .course-green .progress-track span { background: #82bd9b; }
+    .course-progress small { color: #9896a6; font-size: 8px; }
+    .course-arrow { color: #a5a2b4; font-size: 15px; }
+    .courses-empty { padding: 18px 4px; color: var(--muted); font-size: 11px; text-align: center; }
+
+    .right-column { display: grid; gap: 20px; }
+    .chart-card { padding: 20px 21px 13px; }
+    .chart-heading { align-items: flex-start; }
+    .metric { display: flex; align-items: baseline; gap: 8px; margin-top: 11px; }
+    .metric strong { font-size: 25px; font-weight: 650; letter-spacing: -.05em; }
+    .metric span { color: #72b38f; font-size: 9px; font-weight: 600; }
+    .range-tabs { display: flex; gap: 3px; padding: 3px; border-radius: 9px; background: #f6f5f9; }
+    .range-tabs button { padding: 6px 9px; border: 0; border-radius: 7px; background: transparent; color: #a09eae; font-size: 9px; cursor: pointer; }
+    .range-tabs button.active { background: white; color: #6157a8; box-shadow: 0 2px 6px #28233b0d; }
+    .chart-wrap { position: relative; height: 157px; margin-top: 7px; }
+    .chart-wrap svg { width: 100%; height: 100%; overflow: visible; }
+    .chart-gridline { stroke: #f0eff4; stroke-width: 1; }
+    .chart-label { fill: #aaa8b7; font: 9px Inter, system-ui, sans-serif; }
+    .chart-line { fill: none; stroke: #8172d9; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.5; }
+    .chart-line-secondary { fill: none; stroke: #e9a88b; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+    .chart-area { fill: url(#chartGradient); }
+    .chart-area-secondary { fill: url(#chartGradientWarm); }
+    .chart-point { fill: white; stroke: #8172d9; stroke-width: 2.4; }
+    .chart-legend { display: flex; justify-content: center; gap: 20px; margin: -1px 0 1px; color: #9795a5; font-size: 9px; }
+    .chart-legend span { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 6px; height: 6px; border-radius: 50%; background: #8a7bdf; }
+    .legend-dot.warm { background: #e9a88b; }
+
+    .lower-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .homework-card, .friends-card { padding: 18px 19px 14px; }
+    .homework-list { display: grid; gap: 0; margin-top: 9px; }
+    .homework-item { display: flex; min-height: 46px; align-items: center; gap: 10px; border-bottom: 1px solid #f2f1f5; }
+    .homework-item:last-child { border-bottom: 0; }
+    .check {
+      display: grid; width: 17px; height: 17px; flex: 0 0 auto; place-items: center;
+      border: 1px solid #dedce8; border-radius: 6px; background: white; color: white; cursor: pointer;
+    }
+    .check svg { width: 11px; height: 11px; opacity: 0; }
+    .homework-item.done .check { border-color: #8abea0; background: #8abea0; }
+    .homework-item.done .check svg { opacity: 1; }
+    .homework-title { min-width: 0; flex: 1; color: #4d4b60; font-size: 10px; font-weight: 550; }
+    .homework-item.done .homework-title { color: #aaa8b7; text-decoration: line-through; }
+    .homework-meta { color: #a3a1b0; font-size: 9px; }
+    .tag { padding: 5px 7px; border-radius: 7px; background: #f1efff; color: #8375d3; font-size: 8px; font-weight: 600; }
+    .tag.orange { background: #fff2e9; color: #d99470; }
+    .homework-footer { display: flex; justify-content: space-between; margin-top: 8px; color: #a09eae; font-size: 9px; }
+    .homework-footer strong { color: #7166bf; font-weight: 600; }
+    .friend-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f2f1f5; }
+    .friend-row:last-child { border: 0; }
+    .rank { width: 15px; color: #aaa8b8; font-size: 9px; text-align: center; }
+    .friend-avatar { width: 30px; height: 30px; border-radius: 10px; object-fit: cover; }
+    .friend-info { min-width: 0; flex: 1; }
+    .friend-info strong { display: block; color: #49475c; font-size: 10px; font-weight: 600; }
+    .friend-info span { display: block; margin-top: 3px; color: #aaa8b7; font-size: 8px; }
+    .friend-score { color: #5b5871; font-size: 10px; font-weight: 650; }
+    .medal { color: #e5ae6c; font-size: 12px; }
+    .medal.silver { color: #a5a4b3; }
+    .medal.bronze { color: #cf9470; }
+
+    .toast {
+      position: fixed; right: 25px; bottom: 24px; z-index: 8;
+      padding: 12px 16px; border: 1px solid #e9e6f1; border-radius: 12px;
+      background: white; box-shadow: 0 12px 30px #27223a1a; color: #4f4c65;
+      font-size: 11px; opacity: 0; pointer-events: none; transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+    }
+    .toast.visible { opacity: 1; transform: translateY(0); }
+
+    @media (min-width: 1500px) {
+      .main { margin-right: auto; padding-right: 70px; padding-left: 70px; }
+      .chart-wrap { height: 183px; }
+      .courses-card { padding: 23px 21px; }
+      .course { min-height: 101px; }
+    }
+    @media (max-width: 980px) {
+      .main { padding-right: 26px; padding-left: 26px; }
+      .dashboard-grid { grid-template-columns: minmax(245px, .85fr) minmax(0, 1.3fr); gap: 14px; }
+      .right-column, .lower-grid { gap: 14px; }
+      .lower-grid { grid-template-columns: 1fr; }
+      .topbar { height: 74px; }
+      .search { width: 175px; }
+    }
+    @media (max-width: 700px) {
+      .sidebar { inset: auto 0 0; width: 100%; height: 66px; flex-direction: row; justify-content: center; padding: 0 10px; border-top: 1px solid var(--line); border-right: 0; }
+      .brand, .nav-bottom { display: none; }
+      .nav-list { width: auto; flex: initial; flex-direction: row; gap: clamp(12px, 5vw, 30px); margin: 0; }
+      .nav-button { width: 42px; height: 42px; }
+      .nav-button.active::before { top: -12px; left: 50%; width: 18px; height: 3px; border-radius: 0 0 4px 4px; transform: translateX(-50%); }
+      .main { margin: 0; padding: 0 18px 86px; }
+      .topbar { height: 69px; }
+      .breadcrumb { font-size: 11px; }
+      .top-actions { gap: 9px; }
+      .search { width: 38px; padding: 0 10px; border-color: transparent; background: transparent; }
+      .search input { width: 0; padding: 0; }
+      .search:focus-within { position: absolute; right: 108px; left: 18px; z-index: 2; width: auto; border-color: #edebf2; background: white; }
+      .search:focus-within input { width: 100%; }
+      .profile-copy, .profile .chevron { display: none; }
+      .profile img { width: 34px; height: 34px; }
+      .page-heading { align-items: flex-start; margin: 28px 0 18px; }
+      .date-button { padding: 9px; font-size: 0; }
+      .date-button svg { width: 17px; height: 17px; }
+      .dashboard-grid { grid-template-columns: 1fr; gap: 14px; }
+      .right-column { gap: 14px; }
+      .courses-card { padding: 18px 15px 15px; }
+      .courses-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .course { min-height: 144px; flex-direction: column; align-items: flex-start; gap: 10px; padding: 11px 9px; }
+      .course-copy strong { white-space: normal; line-height: 1.35; }
+      .course-copy span { font-size: 8px; }
+      .course-progress { gap: 4px; }
+      .progress-track { width: 44px; }
+      .course-progress small { font-size: 7px; }
+      .course-arrow { position: absolute; top: 12px; right: 10px; }
+      .chart-card { padding: 18px 15px 13px; }
+      .chart-wrap { height: 145px; }
+      .lower-grid { gap: 14px; }
+    }
+    @media (max-width: 390px) {
+      .main { padding-right: 13px; padding-left: 13px; }
+      .top-actions { gap: 5px; }
+      .icon-action { width: 33px; height: 33px; }
+      .page-heading h1 { font-size: 25px; }
+      .courses-list { grid-template-columns: 1fr; }
+      .course { min-height: 78px; flex-direction: row; align-items: center; padding: 11px 12px; }
+      .course-arrow { position: static; margin-left: auto; }
+      .course-copy strong { white-space: nowrap; }
+      .course-progress { margin-top: 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navigasi utama">
+      <a class="brand" href="#" aria-label="Lingua beranda">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true">
+          <path d="M4.8 5.8c2.8-1.5 5.3-1.5 7.2 0v12.4c-1.9-1.5-4.4-1.5-7.2 0V5.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          <path d="M19.2 5.8c-2.8-1.5-5.3-1.5-7.2 0v12.4c1.9-1.5 4.4-1.5 7.2 0V5.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+          <path d="M8 9h1.7M14.3 9H16M8 12h1.7M14.3 12H16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </a>
+      <ul class="nav-list">
+        <li><button class="nav-button active" aria-label="Dashboard" title="Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.7" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="4" width="6.5" height="4" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="10.5" width="6.5" height="9.5" rx="1.7" stroke="currentColor" stroke-width="1.7"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.7" stroke="currentColor" stroke-width="1.7"/></svg>
+        </button></li>
+        <li><button class="nav-button" aria-label="Kursus" title="Kursus">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4.5 6.3c2.8-1.4 5.3-1.4 7.5 0v12c-2.2-1.4-4.7-1.4-7.5 0v-12ZM19.5 6.3c-2.8-1.4-5.3-1.4-7.5 0v12c2.2-1.4 4.7-1.4 7.5 0v-12Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M7.5 9.3h1.8M7.5 12.3h1.8M14.7 9.3h1.8M14.7 12.3h1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button></li>
+        <li><button class="nav-button" aria-label="Jadwal" title="Jadwal">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 3.8v3.5M16 3.8v3.5M4.5 9.5h15M8 13h2M14 13h2M8 16.5h2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button></li>
+        <li><button class="nav-button" aria-label="Pesan" title="Pesan">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 11.7a7.8 7.8 0 0 1-8 7.7 8.5 8.5 0 0 1-3.4-.7L4 20l1.4-3.7a7.4 7.4 0 0 1-1.4-4.3 7.8 7.8 0 0 1 8-7.7 7.8 7.8 0 0 1 8 7.4Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 12h.1M12 12h.1M16 12h.1" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>
+        </button></li>
+        <li><button class="nav-button" aria-label="Statistik" title="Statistik">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19V9M12 19V5M19 19v-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M3.5 19.5h17" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button></li>
+      </ul>
+      <div class="nav-bottom">
+        <button class="nav-button" aria-label="Pengaturan" title="Pengaturan">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8.7a3.3 3.3 0 1 0 0 6.6 3.3 3.3 0 0 0 0-6.6Z" stroke="currentColor" stroke-width="1.7"/><path d="m19.1 13.7 1.1.9-1.5 2.6-1.3-.6a7.4 7.4 0 0 1-1.5.9l-.2 1.5h-3l-.2-1.5a7.4 7.4 0 0 1-1.7-.9l-1.3.6L8 14.6l1.1-.9a6.7 6.7 0 0 1 0-1.8L8 11l1.5-2.6 1.3.6a7.4 7.4 0 0 1 1.7-.9l.2-1.5h3l.2 1.5a7.4 7.4 0 0 1 1.5.9l1.3-.6 1.5 2.6-1.1.9a6.7 6.7 0 0 1 0 1.8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" transform="translate(-2 -1)"/></svg>
+        </button>
+        <img class="nav-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=96&h=96&q=80" alt="Foto profil">
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumb"><span>Pages</span><span aria-hidden="true">/</span><strong>Dashboard</strong></div>
+        <div class="top-actions">
+          <label class="search" aria-label="Cari kursus">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.7"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <input id="course-search" type="search" placeholder="Cari kursus..." autocomplete="off">
+          </label>
+          <button class="icon-action" id="notification-button" aria-label="Notifikasi" title="Notifikasi">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 9.8a6 6 0 0 0-12 0c0 7-2.5 7-2.5 8.2h17C20.5 16.8 18 16.8 18 9.8ZM10 21h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="notification-dot"></span>
+          </button>
+          <div class="profile">
+            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=96&h=96&q=80" alt="Foto profil Hana">
+            <div class="profile-copy"><strong>Hana Putri</strong><span>Pelajar Pro</span></div>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="page-heading" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Ruang belajarmu</p>
+          <h1 id="page-title">Dashboard</h1>
+          <p class="welcome">Senang melihatmu kembali, Hana. Siap belajar hari ini?</p>
+        </div>
+        <button class="date-button" id="date-button">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M8 3.8v3.5M16 3.8v3.5M4.5 9.5h15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span id="today-label">Hari ini</span>
+          <span aria-hidden="true">⌄</span>
+        </button>
+      </section>
+
+      <div class="dashboard-grid">
+        <section class="card courses-card" aria-labelledby="courses-title">
+          <div class="section-heading">
+            <div><h2 id="courses-title">Kursus Saya</h2><p>Lanjutkan perjalanan belajarmu</p></div>
+            <button class="text-link" id="all-courses">Lihat semua <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="courses-list" id="courses-list">
+            <button class="course course-purple selected" data-course="Speak with Confidence" data-lessons="12" data-complete="72">
+              <span class="course-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.8a8.2 8.2 0 0 0-4.6 15l-.9 2.2 3.5-1.1A8.2 8.2 0 1 0 12 3.8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.4 10.5c.6 1.5 1.6 2.5 3.2 3.2l1.1-1 1.6.8-.2 1.5c-3.7.5-7.2-3-6.7-6.7l1.5-.2.8 1.6-1.3.8Z" fill="currentColor"/></svg></span>
+              <span class="course-copy"><strong>Speak with Confidence</strong><span>English · 12 lessons</span><span class="course-progress"><span class="progress-track"><span style="width:72%"></span></span><small>72%</small></span></span>
+              <span class="course-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="course course-peach" data-course="Master the Basics" data-lessons="8" data-complete="48">
+              <span class="course-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 5.5h14v13H5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 12h5M8 15h3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+              <span class="course-copy"><strong>Master the Basics</strong><span>French · 8 lessons</span><span class="course-progress"><span class="progress-track"><span style="width:48%"></span></span><small>48%</small></span></span>
+              <span class="course-arrow" aria-hidden="true">›</span>
+            </button>
+            <button class="course course-green" data-course="Sound Like a Native" data-lessons="10" data-complete="35">
+              <span class="course-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v16M8.5 8v8M5 10.5v3M15.5 7v10M19 10v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+              <span class="course-copy"><strong>Sound Like a Native</strong><span>Japanese · 10 lessons</span><span class="course-progress"><span class="progress-track"><span style="width:35%"></span></span><small>35%</small></span></span>
+              <span class="course-arrow" aria-hidden="true">›</span>
+            </button>
+          </div>
+          <p class="courses-empty" id="courses-empty" hidden>Kursus tidak ditemukan.</p>
+        </section>
+
+        <div class="right-column">
+          <section class="card chart-card" aria-labelledby="performance-title">
+            <div class="section-heading chart-heading">
+              <div>
+                <h2 id="performance-title">Grafik Performa</h2>
+                <p>Perkembangan belajarmu dari waktu ke waktu</p>
+                <div class="metric"><strong id="hours-metric">4,78</strong><span>↗ 12,8% bulan ini</span></div>
+              </div>
+              <div class="range-tabs" role="group" aria-label="Rentang waktu grafik">
+                <button data-range="7" class="active">7 hari</button>
+                <button data-range="30">30 hari</button>
+                <button data-range="90">90 hari</button>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <svg id="performance-chart" viewBox="0 0 600 170" preserveAspectRatio="none" role="img" aria-label="Grafik performa belajar">
+                <defs>
+                  <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#8d7dde" stop-opacity=".16"/><stop offset="100%" stop-color="#8d7dde" stop-opacity="0"/></linearGradient>
+                  <linearGradient id="chartGradientWarm" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#edae91" stop-opacity=".11"/><stop offset="100%" stop-color="#edae91" stop-opacity="0"/></linearGradient>
+                </defs>
+                <g id="chart-grid">
+                  <line class="chart-gridline" x1="39" y1="18" x2="590" y2="18"/><line class="chart-gridline" x1="39" y1="52" x2="590" y2="52"/>
+                  <line class="chart-gridline" x1="39" y1="86" x2="590" y2="86"/><line class="chart-gridline" x1="39" y1="120" x2="590" y2="120"/>
+                  <text class="chart-label" x="2" y="21">100%</text><text class="chart-label" x="9" y="55">75%</text>
+                  <text class="chart-label" x="9" y="89">50%</text><text class="chart-label" x="9" y="123">25%</text>
+                </g>
+                <g id="chart-data"></g>
+                <g id="chart-xlabels"></g>
+              </svg>
+            </div>
+            <div class="chart-legend"><span><i class="legend-dot"></i>Bahasa Inggris</span><span><i class="legend-dot warm"></i>Bahasa Prancis</span></div>
+          </section>
+
+          <div class="lower-grid">
+            <section class="card homework-card" aria-labelledby="homework-title">
+              <div class="section-heading">
+                <div><h2 id="homework-title">Pekerjaan Rumah</h2><p id="homework-subtitle">Tugas yang perlu diselesaikan</p></div>
+                <button class="text-link" id="homework-link">Lihat semua <span aria-hidden="true">→</span></button>
+              </div>
+              <div class="homework-list" id="homework-list">
+                <div class="homework-item">
+                  <button class="check" aria-label="Tandai tugas sebagai selesai"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3.3 8.3 3 3 6.4-6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                  <span class="homework-title">Latihan percakapan</span><span class="tag">Speaking</span>
+                </div>
+                <div class="homework-item">
+                  <button class="check" aria-label="Tandai tugas sebagai selesai"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3.3 8.3 3 3 6.4-6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                  <span class="homework-title">Kosakata sehari-hari</span><span class="tag orange">Vocabulary</span>
+                </div>
+                <div class="homework-item done">
+                  <button class="check" aria-label="Tandai tugas sebagai belum selesai"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3.3 8.3 3 3 6.4-6.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                  <span class="homework-title">Grammar: present tense</span><span class="tag">Grammar</span>
+                </div>
+              </div>
+              <div class="homework-footer"><span><strong id="completed-count">1</strong> dari 3 tugas selesai</span><span>2 jatuh tempo hari ini</span></div>
+            </section>
+
+            <section class="card friends-card" aria-labelledby="friends-title">
+              <div class="section-heading">
+                <div><h2 id="friends-title">Skor Teman</h2><p>Peringkat minggu ini</p></div>
+                <button class="text-link" id="friends-link">Peringkat <span aria-hidden="true">→</span></button>
+              </div>
+              <div class="friend-row"><span class="rank">1</span><img class="friend-avatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&h=80&q=80" alt=""><div class="friend-info"><strong>Raka Pratama</strong><span>🔥 12 hari beruntun</span></div><span class="friend-score">10.427</span><span class="medal">✦</span></div>
+              <div class="friend-row"><span class="rank">2</span><img class="friend-avatar" src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&h=80&q=80" alt=""><div class="friend-info"><strong>Nadia Putri</strong><span>⚡ Belajar hari ini</span></div><span class="friend-score">9.350</span><span class="medal silver">✦</span></div>
+              <div class="friend-row"><span class="rank">3</span><img class="friend-avatar" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=80&h=80&q=80" alt=""><div class="friend-info"><strong>Aditya Ramadhan</strong><span>✨ Terus semangat!</span></div><span class="friend-score">8.945</span><span class="medal bronze">✦</span></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const chartData = {
+      7: {
+        labels: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"],
+        first: [57, 67, 60, 76, 72, 86, 82],
+        second: [46, 56, 53, 61, 58, 71, 68],
+        hours: "4,78"
+      },
+      30: {
+        labels: ["1 Jun", "5 Jun", "10 Jun", "15 Jun", "20 Jun", "25 Jun", "30 Jun"],
+        first: [37, 44, 41, 58, 55, 72, 82],
+        second: [31, 36, 43, 46, 54, 59, 68],
+        hours: "18,42"
+      },
+      90: {
+        labels: ["Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt"],
+        first: [29, 35, 41, 49, 58, 71, 82],
+        second: [26, 32, 37, 42, 49, 58, 68],
+        hours: "56,16"
+      }
+    };
+
+    const chartGroup = document.getElementById("chart-data");
+    const xLabels = document.getElementById("chart-xlabels");
+    const chartXStart = 42;
+    const chartXEnd = 582;
+    const chartY = value => 136 - value * 1.16;
+
+    function makeLine(values) {
+      const points = values.map((value, index) => {
+        const x = chartXStart + index * ((chartXEnd - chartXStart) / (values.length - 1));
+        return [x, chartY(value)];
+      });
+      const line = points.map((point, index) => `${index ? "L" : "M"} ${point[0]} ${point[1]}`).join(" ");
+      return { points, line, area: `${line} L ${chartXEnd} 140 L ${chartXStart} 140 Z` };
+    }
+
+    function renderChart(range) {
+      const data = chartData[range];
+      const first = makeLine(data.first);
+      const second = makeLine(data.second);
+      chartGroup.innerHTML = `
+        <path class="chart-area-secondary" d="${second.area}"></path>
+        <path class="chart-area" d="${first.area}"></path>
+        <path class="chart-line-secondary" d="${second.line}"></path>
+        <path class="chart-line" d="${first.line}"></path>
+        <circle class="chart-point" cx="${first.points.at(-1)[0]}" cy="${first.points.at(-1)[1]}" r="4"></circle>`;
+      xLabels.innerHTML = data.labels.map((label, index) => {
+        const x = chartXStart + index * ((chartXEnd - chartXStart) / (data.labels.length - 1));
+        return `<text class="chart-label" x="${x}" y="158" text-anchor="middle">${label}</text>`;
+      }).join("");
+      document.getElementById("hours-metric").textContent = data.hours;
+    }
+
+    renderChart(7);
+
+    document.querySelectorAll(".range-tabs button").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelector(".range-tabs .active").classList.remove("active");
+        button.classList.add("active");
+        renderChart(Number(button.dataset.range));
+      });
+    });
+
+    document.querySelectorAll(".course").forEach(course => {
+      course.addEventListener("click", () => {
+        document.querySelector(".course.selected")?.classList.remove("selected");
+        course.classList.add("selected");
+        const selectedCourse = course.dataset.course;
+        document.querySelector(".metric span").textContent = `↗ ${course.dataset.complete}% progres`;
+        showToast(`${selectedCourse} dipilih · ${course.dataset.lessons} pelajaran`);
+      });
+    });
+
+    document.getElementById("course-search").addEventListener("input", event => {
+      const query = event.target.value.trim().toLocaleLowerCase("id");
+      let visibleCourses = 0;
+      document.querySelectorAll(".course").forEach(course => {
+        const matches = course.textContent.toLocaleLowerCase("id").includes(query);
+        course.hidden = !matches;
+        if (matches) visibleCourses += 1;
+      });
+      document.getElementById("courses-empty").hidden = visibleCourses !== 0;
+    });
+
+    document.querySelectorAll(".nav-button").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelector(".nav-button.active")?.classList.remove("active");
+        button.classList.add("active");
+        if (button.title && button.title !== "Dashboard") showToast(`${button.title} akan segera hadir`);
+      });
+    });
+
+    function updateHomework() {
+      const items = [...document.querySelectorAll(".homework-item")];
+      const completed = items.filter(item => item.classList.contains("done")).length;
+      document.getElementById("completed-count").textContent = completed;
+      document.getElementById("homework-subtitle").textContent = completed === items.length
+        ? "Semua tugasmu sudah selesai — keren!"
+        : "Tugas yang perlu diselesaikan";
+      items.forEach(item => {
+        const done = item.classList.contains("done");
+        item.querySelector(".check").setAttribute("aria-label", `Tandai tugas sebagai ${done ? "belum selesai" : "selesai"}`);
+      });
+    }
+
+    document.querySelectorAll(".homework-item .check").forEach(button => {
+      button.addEventListener("click", () => {
+        const item = button.closest(".homework-item");
+        item.classList.toggle("done");
+        updateHomework();
+        showToast(item.classList.contains("done") ? "Tugas ditandai selesai ✓" : "Tugas ditandai belum selesai");
+      });
+    });
+
+    let toastTimer;
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("visible"), 2200);
+    }
+
+    document.getElementById("notification-button").addEventListener("click", () => showToast("Kamu sudah melihat semua notifikasi."));
+    document.getElementById("all-courses").addEventListener("click", () => {
+      document.getElementById("course-search").focus();
+      showToast("Cari kursus yang ingin kamu lanjutkan.");
+    });
+    document.getElementById("homework-link").addEventListener("click", () => showToast("Kamu melihat semua pekerjaan rumah."));
+    document.getElementById("friends-link").addEventListener("click", () => showToast("Peringkat teman minggu ini sudah ditampilkan."));
+    document.getElementById("date-button").addEventListener("click", () => {
+      const today = new Intl.DateTimeFormat("id-ID", { weekday: "long", day: "numeric", month: "long" }).format(new Date());
+      document.getElementById("today-label").textContent = today;
+    });
+  </script>
+</body>
+</html>
